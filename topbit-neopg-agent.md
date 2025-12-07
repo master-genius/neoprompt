@@ -283,6 +283,8 @@ class NeoPG {
 
 // 链式构造器
 class ModelChain {
+    //model是解析后的表结构实例，MeoPG的model方法会自动传递
+    constructor(ctx: NeoPG, model: object, schema:string = 'public');
     // 查询构建
     select(cols: string | string[]): this;
     where(obj: Object): this;
