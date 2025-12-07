@@ -305,6 +305,7 @@ class ModelChain {
     insert(data: Object | Object[]): Promise<any>;
     update(data: Object): Promise<any>;
     delete(): Promise<any>;
+    transaction(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;
 }
 ```
 
