@@ -323,6 +323,22 @@ class Product extends ModelChain {
     },
     index: ['name']
   }
+
+  //自定义处理方法封装基础操作
+  async batchRemove(ids) {
+    return this.transaction(async tx => {
+      //自定义逻辑
+    })
+  }
+
+  //自定义处理方法
+  async create(data, images) {
+    return this.transaction(async tx => {
+      let p = await tx.model('Product').insert(data)
+      await tx.model('ProductImages').create(p.id, images)
+      return p
+    })
+  }
 }
 
 // app.js
