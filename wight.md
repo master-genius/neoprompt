@@ -22,6 +22,7 @@ wight/
 |-- package.json  # wight框架主要npm扩展的依赖配置文件
 |-- build.js      # 开发完成后打包构建项目的命令
 |-- newcomps.js   # 创建组件的命令：node newcomps.js [项目名称] [组件名称]
+|-- createproject.js # 创建新的项目：node createproject.js --empty [项目名称]
 |-- apps/         # 所有项目都在apps目录下，一个子目录就是一个项目
 |   |-- eshop   # 后续部分有具体项目的结构说明
 |   |-- eoms
@@ -44,6 +45,15 @@ AI要自动化处理，可以参考以下命令：
 ```
 npm run dev [项目1] [项目2]
 ```
+
+**创建新的项目**
+
+```
+node createproject.js --empty [项目名称]
+```
+
+这会在apps目录下创建新的项目，并且会把w/emptyproject的初始代码复制过去作为示例。
+这里面包括了框架的内置扩展。
 
 ---
 
