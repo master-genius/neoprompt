@@ -28,6 +28,8 @@
 npm i topbit
 ```
 
+**最新版本是：3.0.8**
+
 ### 1.2 架构与目录规范 (TopbitLoader Standard)
 除非用户指定单文件简单模式，否则必须遵循以下目录结构：
 ```text
@@ -424,6 +426,8 @@ const count = await query.clone().count();
 ```
 npm i neopg
 ```
+
+**最新版本是：2.0.4**
 
 ---
 
