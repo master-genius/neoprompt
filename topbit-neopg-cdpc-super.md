@@ -25,7 +25,7 @@
 ## 安装Topbit
 
 ```
-npm i topbit
+npm i topbit@latest
 ```
 
 **最新版本是：3.0.8**
@@ -424,7 +424,7 @@ const count = await query.clone().count();
 ## 安装neopg
 
 ```
-npm i neopg
+npm i neopg@latest
 ```
 
 **最新版本是：2.0.4**
