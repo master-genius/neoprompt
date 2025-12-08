@@ -369,3 +369,237 @@ class ImageSlide extends Component {
 *   **扩展**:
     *   `w.import(path)`: 动态加载模块。
     *   `w.loadScript(src)`.
+
+---
+
+## extends目录下扩展说明和示例
+
+- **导入方式**：Wight 框架使用 `const module = <-('module_name')` 的语法导入扩展模块。
+
+### Core API Definitions (核心定义)
+
+#### 1. HTTP Request (apicall.js)
+
+- 用于处理网络请求，内置了防抖、重试、Token注入和统一错误处理。
+- 文件应该存在于extends/apicall.js
+- 代码内部通过module.exports或exports导出模块。
+
+```typescript
+// 导入
+const apicall = <-('apicall');
+
+interface ApiOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'; // 默认为 GET
+  query?: Record<string, any>;   // 自动序列化并拼接到 URL
+  body?: Record<string, any> | string | FormData; // 请求体
+  headers?: Record<string, string>;
+  dataType?: 'json' | 'blob' | 'text'; // 默认 json
+  retry?: number;      // 重试次数，默认读取 w.config.apiRetry
+  retryDelay?: number; // 重试延迟(ms)
+  coverText?: string;  // 如果设置，请求期间会显示全屏 Loading 遮罩
+  
+  // 回调模式 (Legacy Pattern)
+  success?: (res: ApiResponse) => void;
+  fail?: (res: ApiResponse) => void;
+  onError?: (res: ApiResponse) => void;
+}
+
+interface ApiResponse {
+  ok: boolean;
+  status: number;
+  data: any;
+  error?: Error;
+  headers: Headers;
+  // 链式处理 helper
+  exec: (handlers: { 
+    success?: (res) => void, 
+    fail?: (res) => void, 
+    onError?: (res) => void 
+  }) => void; 
+}
+
+/**
+ * 通用请求函数
+ * @param api URL路径 (如果是 http 开头则绝对路径，否则自动拼接 w.host)
+ */
+function apicall(api: string | ApiOptions, options?: ApiOptions): Promise<ApiResponse>;
+
+// 快捷方法
+apicall.get(api: string, options?: ApiOptions): Promise<ApiResponse>;
+apicall.post(api: string, options?: ApiOptions): Promise<ApiResponse>;
+// ... put, delete, patch 亦同
+```
+
+#### 2. Template Rendering (renders.js)
+
+- 扩展了 `Array` 和 `Object` 的原型，用于快速生成 HTML 字符串。
+- 无需导入，启用后，内部会添加Array和Object的原型方法。
+
+```typescript
+// 无需导入
+declare global {
+  interface Array<T> {
+    /**
+     * @param callback 映射函数，返回 HTML 字符串片段
+     * @param firstText 拼接在结果最前面的字符串
+     * @param endText 拼接在结果最后面的字符串
+     */
+    renders(callback: (item: T, index: number) => string, firstText?: string, endText?: string): string;
+  }
+
+  interface Object {
+    /**
+     * @param callback 映射函数，返回 HTML 字符串片段
+     */
+    renders(callback: (value: any, key: string) => string, firstText?: string, endText?: string): string;
+  }
+}
+```
+
+#### 3. Auth Token Manager (token.js)
+
+- 单例对象，用于管理 Auth Token。
+
+```typescript
+const token = <-('token');
+
+interface TokenObject {
+  token: string;
+  refresh_token: string;
+  expires: number;
+  time: number; // 获取时间
+}
+
+const TokenManager = {
+  // 获取当前 Token 对象
+  get(): TokenObject | null,
+  
+  // 验证 Token 是否有效 (k='refresh' 验证刷新token，否则验证访问token)
+  verify(k?: string): boolean,
+  
+  // 触发刷新 Token (通常由 apicall 内部自动调用，也可手动调用)
+  refresh(refresh_api?: string, quiet?: boolean): Promise<boolean>,
+  
+  // 清除 Token
+  remove(): void
+};
+```
+
+#### 4. DOM Query Shortcuts (querybind.js)
+
+- 扩展 DOM 元素原型，提供类似 jQuery 的简写。
+- 无需导入，自动给Element添加原型方法。
+
+```typescript
+// 自动扩展 Element.prototype
+
+interface Element {
+  /**
+   * querySelector 的包装，支持 callback
+   */
+  query(selector: string, callback?: (el: Element) => void): Element | null;
+  
+  /**
+   * querySelectorAll 的包装，支持 callback 对所有结果进行迭代
+   */
+  queryAll(selector: string, callback?: (el: Element) => void): NodeListOf<Element>;
+}
+```
+
+#### 5. UI Confirmation (confirm.js)
+
+- 自定义的模态确认框，替代原生 `confirm`。
+- 无需导入，自动覆盖window.confirm方法。
+
+```typescript
+
+interface ConfirmOptions {
+  text: string;           // 提示内容 (支持 HTML)
+  callback: (args: any) => void; // 点击“确定”后的回调
+  args?: any;             // 传递给 callback 的参数
+  cancel?: () => void;    // 点击“取消”后的回调
+  dark?: boolean;         // 深色模式
+  transparent?: boolean;  // 透明背景
+  buttonStyle?: [string, string]; // [确定按钮样式, 取消按钮样式]
+  autoHide?: boolean;     // 点击后是否自动关闭弹窗 (默认为 true)
+}
+
+function confirm(opts: ConfirmOptions): void;
+```
+
+---
+
+### Coding Guidelines (编码规范)
+
+1.  **API 调用优先使用快捷方式**：对于简单的 CRUD，优先使用 `apicall.get`, `apicall.post`。
+2.  **利用 `renders` 简化模板**：不要手动写 `for` 循环拼接字符串，使用 `data.renders(item => \`<li>${item.name}</li>\`)`。
+3.  **处理异步**：`apicall` 是异步的，务必使用 `await` 或 `.then()`。
+4.  **DOM 操作**：在组件内部查找元素时，优先使用 `this.query('.class')` 而不是 `document.querySelector`。
+
+### Examples (使用示例)
+
+#### 示例 1：获取数据并渲染列表
+```javascript
+//以下代码应该在页面js文件或组件js文件中
+const apicall = <-('apicall')
+const htmltag = <-('htmltag')
+
+//在页面或组件js文件中，应该被封装为方法
+async function loadUserList() {
+  const container = document.querySelector('#user-list');
+  
+  // 1. 发起请求
+  const res = await apicall.get('/api/users', {
+    query: { page: 1, size: 10 },
+    coverText: '加载中...' // 自动显示遮罩
+  });
+
+  // 2. 处理结果
+  if (res.ok) {
+    // 3. 使用 renders 生成 HTML
+    const html = res.data.list.renders((user) => {
+      return htmltag`<div class="user-card" data-id="${user.id}">
+                <h3>${user.name}</h3>
+                <p>${user.role}</p>
+              </div>`;
+    }, '<div class="list-wrapper">', '</div>');
+    
+    //给具备属性data-name="user-list" DOM节点渲染出数据
+    this.view('user-list', html)
+  } else {
+    w.notifyTopError(res.statusText)
+  }
+}
+```
+
+#### 示例 2：删除确认与 DOM 操作
+```javascript
+const { confirm } = <-('confirm');
+const apicall = <-('apicall');
+
+//应该在页面或组件js文件中，被封装为方法，此处是示例函数
+function bindDeleteEvents(rootElement) {
+  // 使用 queryAll 批量绑定
+  rootElement.queryAll('.btn-delete', (btn) => {
+    btn.onclick = (e) => {
+      const id = e.target.dataset.id;
+      
+      // 调用自定义 confirm
+      confirm({
+        text: '确定要删除该条目吗？<br>此操作不可恢复。',
+        dark: true, // 深色主题
+        args: id,   // 将 id 传给回调
+        callback: async (targetId) => {
+          const res = await apicall.delete(`/api/item/${targetId}`);
+          
+          if (res.ok) {
+            w.notify('删除成功');
+            // 移除 DOM 元素
+            rootElement.query(`.item[data-id="${targetId}"]`, el => el.remove());
+          }
+        }
+      });
+    };
+  });
+}
+```
