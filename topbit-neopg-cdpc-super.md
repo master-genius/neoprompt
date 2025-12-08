@@ -428,7 +428,7 @@ const count = await query.clone().count();
 npm i neopg@latest
 ```
 
-**最新版本是：2.0.4**
+**最新版本是：2.0.5**
 
 ---
 
@@ -674,6 +674,7 @@ interface AppConfig {
 ```
 
 ### 1.2 主控类 (CDPC)
+
 管理所有子进程的生命周期。
 
 ```typescript

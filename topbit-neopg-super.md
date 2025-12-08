@@ -24,7 +24,7 @@
 ## 安装Topbit
 
 ```
-npm i topbit
+npm i topbit@latest
 ```
 
 ### 1.2 架构与目录规范 (TopbitLoader Standard)
@@ -422,7 +422,7 @@ const count = await query.clone().count();
 ## 安装neopg
 
 ```
-npm i neopg
+npm i neopg@latest
 ```
 
 ---

@@ -9,6 +9,12 @@
 *   **零依赖 (Zero-Dep)**: 基于 `postgres.js` 构建，无其他依赖。代码应保持轻量、原生。
 *   **模型即 Schema**: 所有的表结构、索引、外键都在 Model 类的 `static schema` 中定义，并通过 `db.sync()` 自动同步。
 
+## 安装
+
+```
+npm i neopg@latest
+```
+
 ## 2. 编码规范 (Coding Standards)
 
 ### 2.1 模型定义 (Model Definition)
