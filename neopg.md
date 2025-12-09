@@ -83,6 +83,7 @@ class ModelChain {
     delete(): Promise<any>;
     makeId(): string;
     transaction(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;
+    model(name: string): ModelChain;
 }
 ```
 

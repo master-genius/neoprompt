@@ -325,6 +325,7 @@ class ModelChain {
     delete(): Promise<any>;
     makeId(): string;
     transaction(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;
+    model(name: string): ModelChain;
 }
 ```
 
@@ -437,7 +438,7 @@ const count = await query.clone().count();
 npm i neopg@latest
 ```
 
-**最新版本是：2.0.5**
+**最新主版本号是 2**
 
 ---
 
