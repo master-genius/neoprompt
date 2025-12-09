@@ -215,3 +215,11 @@ class User {
 
 module.exports = User
 ```
+
+## 安装
+
+```
+npm i topbit@latest
+```
+
+- 当前最新主版本号是 3
