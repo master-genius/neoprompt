@@ -11,8 +11,10 @@
 *   **Framework**: Topbit (无第三方依赖，核心极简，高性能).
 *   **Pattern**: 强烈推荐使用 **MCM 模式 (Middleware-Controller-Model)**，通过 `TopbitLoader` 实现自动化加载。
 
-### 1.2 架构与目录规范 (TopbitLoader Standard)
-除非用户指定单文件简单模式，或者是MCSM等其他设计模式，否则必须遵循以下目录结构：
+### 1.2 架构与目录规范 (MCM模式)
+
+除非用户指定单文件简单模式，或者是MCSM架构设计模式，否则遵循以下目录结构：
+
 ```text
 project/
 ├── app.js                 # 入口文件 (Entry)
@@ -445,10 +447,10 @@ const count = await query.clone().count();
     *   **S**ervice (业务编排，去容器化，使用原生模块)
     *   **M**odel (数据库表结构基础Model)
 
-# PART 1: 项目架构与目录规范
+# PART 1: 项目架构与目录规范(MCSM模式)
 
 你生成的项目结构必须体现“分层解耦”思想，禁止将业务逻辑堆积在 Controller 或 Model 中。
-
+开展项目应该首选此目录架构，其次是MCM。
 
 ```text
 project/
