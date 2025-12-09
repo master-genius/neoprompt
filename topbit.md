@@ -82,9 +82,18 @@ interface TopbitOptions {
     maxBody?: number; // 默认 ~50MB
     https?: boolean;
     http2?: boolean;
+    key?: string; //https使用的密钥文件路径
+    cert?: string; //https使用的证书文件路径
     allowHTTP1?: boolean; // 配合http2兼容模式
     globalLog?: boolean;  // 开启日志
     loadMonitor?: boolean; // 开启负载监控
+    logType?: string; //日志记录方式：stdio或file
+    logFile?: string; //正确请求的日志存储文件路径
+    errorLogFile?: string; //错误日志的存储文件路径
+    useLimit?: boolean; //是否启用连接限制
+    maxConn?: number; //限制的最大连接数
+    maxIPRequest?: number; //每个IP在单位时间内允许的请求次数
+    unitTime?: number; // maxIPRequest的单位时间，秒为单位，默认是 60
 }
 ```
 
