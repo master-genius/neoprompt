@@ -230,5 +230,3 @@ module.exports = User
 ```
 npm i topbit@latest
 ```
-
-- 当前最新主版本号是 3
