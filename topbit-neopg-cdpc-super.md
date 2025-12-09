@@ -22,13 +22,11 @@
 *   **Framework**: Topbit (无第三方依赖，高性能).
 *   **Pattern**: 强烈推荐使用 **MCM 模式 (Middleware-Controller-Model)**，通过 `TopbitLoader` 实现自动化加载。
 
-## 安装Topbit
+## 安装Topbit(若自动化工具需要)
 
 ```
 npm i topbit@latest
 ```
-
-**最新主版本号是 3**
 
 ### 1.2 架构与目录规范 (TopbitLoader Standard)
 除非用户指定单文件简单模式，否则必须遵循以下目录结构：
@@ -437,8 +435,6 @@ const count = await query.clone().count();
 ```
 npm i neopg@latest
 ```
-
-**最新主版本号是 2**
 
 ---
 

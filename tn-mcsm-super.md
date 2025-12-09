@@ -555,7 +555,7 @@ Service 层必须是**无状态的单例**，通过 `require` 引用，通过继
 
 ## 4.1 BaseService (framework/base_service.js)
 ```javascript
-const db = require('./db') // 自动感知的 DB 实例
+const db = require('./db.js') // 自动感知的 DB 实例
 
 class BaseService {
     constructor(modelName) {
