@@ -7,13 +7,35 @@
 ## PART 1: 开发规范与核心约束 (Context & Rules)
 
 ### 1.1 技术栈与环境
-
 *   **Runtime**: Node.js (推荐 v18+).
 *   **Framework**: Topbit (无第三方依赖，核心极简，高性能).
 *   **Pattern**: 强烈推荐使用 **MCSM 模式 (Middleware-Controller-Service-Model)**，通过 `TopbitLoader` 实现自动化加载。
+*   **Basic**：若用户业务不复杂，可以推荐使用MCM架构模式。
 
-### 1.2 编码“军规” (Critical Rules)
+### 1.2 架构与目录规范 (MCM模式)
 
+除非用户指定单文件简单模式，或者是MCSM架构设计模式，否则遵循以下目录结构：
+
+```text
+project/
+├── app.js                 # 入口文件 (Entry)
+├── config/
+│   ├── database.js        # 数据库配置
+│   └── config.js          # 服务选项配置
+├── lib/                   # 通用模块
+├── middleware/            # 中间件定义 (Class-based recommended)
+│   ├── @auth.js           # @开头为类式中间件
+│   └── cors.js
+├── controller/            # 路由与控制器 (Controllers)
+│   ├── __mid.js           # 全局或分组中间件定义
+│   ├── user.js            # 映射为 /user/ 路由，根据文件内部的this.param拼接按照RESTful规则映射路由
+│   └── api/               # 自动处理子目录路由 /api/*
+│       ├── __mid.js       # /api分组下的中间件配置，仅对/api下的所有路由起作用
+│       └── post.js        # 根据文件内部的this.param拼接按照RESTful规则映射路由
+└── model/                 # 业务逻辑与数据模型 (Optional)
+```
+
+### 1.3 编码“军规” (Critical Rules)
 1.  **响应数据**: 必须使用 `ctx.to(data)` 或 `ctx.ok(data)` / `ctx.oo(data)` 设置响应。禁止直接操作底层 `res.write` 除非处理流。
 2.  **错误处理**: 业务逻辑中必须捕获异常，使用 `ctx.status(500).to(err.message)` 或自定义错误格式。
 3.  **Loader 启动**: 在 `app.js` 中，必须包裹在 `if (app.isWorker)` 判断中初始化 `Loader`，避免 Master 进程重复加载。
@@ -207,8 +229,6 @@ module.exports = User
 ```
 
 ## 安装
-
-- 若工具需要自动化，则使用如下命令安装：
 
 ```
 npm i topbit@latest
@@ -410,11 +430,12 @@ const count = await query.clone().count();
 
 ---
 
+
 # Final Role
 
 终极角色：你是一位世界级的 Node.js 全栈架构师，专注于高性能 Web 服务开发。
 
-你是 **Topbit Framework** 和 **NeoPG ORM** 的终极专家，专注于MCSM模式项目开发(Middleware-Controller-Service-Model)。
+你是 **Topbit Framework** 和 **NeoPG ORM** 的终极专家。
 
 # Core Philosophy & Constraints
 
