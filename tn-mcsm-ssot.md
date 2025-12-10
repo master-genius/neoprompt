@@ -18,6 +18,8 @@
 
 *   **`rule` 属性**: 是一个纯 Object，其结构完全符合 **Topbit ParamCheck** 中间件的要求。
 *   **无需翻译**: 适配器不会修改这个对象，只会搬运它。
+*   **`ruleOptions`**：`static schema`的属性，object类型，是要给ParamCheck传递的其他选项。
+*   **`denyNotRule`**：`static schema`的属性，布尔值，为true则表示把所有没有设置rule的column属性收集到deny中。
 
 **代码示例:**
 ```javascript
@@ -56,6 +58,9 @@ class User extends ModelChain {
             created_at: { type: dataTypes.BIGINT }
         },
 
+        //自动拒绝没有设置rule属性的列，这会自动收集，并覆盖deny的设置
+        denyNotRule: true,
+
         ruleOptions: {
             deny: ['id'],
             deleteDeny: true
@@ -75,62 +80,125 @@ module.exports = User
 负责从 Model 中提取规则，支持白名单(pick)和黑名单(omit)。
 
 ```javascript
+'use strict'
+
+const {ParamCheck} = require('Topbit').extensions
+
 /**
- * 从 Model 提取 ParamCheck 规则
+ * 智能适配器：Model -> ParamCheck Config
+ * 
+ * @param {Class} Model - 模型类
+ * @param {Object} options - 配置项
+ * @param {Array} options.must - 必填字段列表
+ * @param {Array} options.pick - 白名单
+ * @param {Boolean} options.denyNotRule - (覆盖Model) 是否拒绝未知字段
  */
 exports.modelRule = (Model, options = {}) => {
-    if (!Model || !Model.schema) return null
+    if (!Model || !Model.schema) return { rule: {} }
 
     const columns = Model.schema.column
-    const finalRule = {}
+    const modelOptions = Model.schema.ruleOptions || {}
+
+    const denyNotRule = !!options.denyNotRule || !!Model.schema.denyNotRule
+    const denylist = []
+    const ruleMap = {}
+    const mustFields = options.must || []
 
     for (const [field, meta] of Object.entries(columns)) {
-        // 1. 忽略未定义校验规则的字段
-        if (!meta.rule) continue
-        
-        // 2. 白名单处理
+        if (!meta.rule) {
+          denyNotRule && denylist.push(field)
+          continue
+        }
+
         if (options.pick && !options.pick.includes(field)) continue
-        
-        // 3. 黑名单处理
         if (options.omit && options.omit.includes(field)) continue
 
-        // 4. 原样搬运规则
-        finalRule[field] = meta.rule
+        const rule = { ...meta.rule }
+
+        // 动态应用必填逻辑
+        if (mustFields.includes(field)) {
+            rule.must = true
+        } else {
+            rule.must = false
+        }
+
+        ruleMap[field] = rule
     }
-    return finalRule
+
+    if ((!modelOptions.deny || !Array.isArray(modelOptions.deny)) && denylist.length > 0) {
+      modelOptions.deny = denylist
+    }
+
+    if (options.deleteDeny !== undefined) {
+      modelOptions.deleteDeny = !!options.deleteDeny
+    }
+
+    return {
+        rule: ruleMap,
+        ...modelOptions
+    }
 }
-```
 
-### 3.2 混合器: `framework/util.js`
-负责将控制器定义的 `rules` 转换为 `__mid` 数组。
-
-```javascript
 /**
- * 混合手动中间件与自动校验规则
+ * 智能混合器：将规则对象转换为 Topbit 中间件配置数组
+ * ParamCheck的选项：key、rule、deny、deleteDeny
+ * @param {Array} manualMids - 手动定义的中间件
+ * @param {Object} rules - 控制器的 this.rules 配置对象
+ * @returns {Array} 拍平后的中间件配置数组
  */
-exports.mixin = (manualMids = [], rules = {}) => {
+exports.mixinMids = (rules = {}) => {
     const autoMids = []
 
+    // 遍历控制器中定义的每一个业务函数 (e.g. 'post', 'get', 'list')
     for (const [handlerName, config] of Object.entries(rules)) {
         if (!config) continue
-        
-        // 遍历 body, query, param 三种数据源
-        ['body', 'query', 'param'].forEach(key => {
-            if (config[key]) {
-                autoMids.push({
-                    name: 'ParamCheck', // 必须对应 Topbit 加载的扩展名
-                    handler: handlerName, // 绑定到具体函数 (e.g., 'post')
-                    options: {
-                        key: key,       // 'body' | 'query' | 'param'
-                        rule: config[key] // 具体的规则对象
-                    }
-                })
+
+        // ParamCheck 支持的三个检测维度
+        const checkKeys = ['query', 'param', 'body']
+
+        checkKeys.forEach(key => {
+            const item = config[key]
+          
+            if (!item) return
+
+            // --- 核心逻辑：参数清洗与构建 ---
+            // 1. 提取 ParamCheck 真正需要的选项
+            // 否则传给 ParamCheck 可能会导致意外行为或报错
+            let finalOptions = {}
+
+            // 判断 item 是纯规则对象还是 toRule 生成的配置对象
+            // 判定依据：toRule 生成的对象会有 'rule' 属性
+            if (item.rule && typeof item.rule === 'object') {
+                finalOptions = { 
+                    key, 
+                    rule: item.rule
+                }
+      
+                if (item.deny) {
+                  finalOptions.deny = item.deny
+                }
+
+                if (item.deleteDeny !== undefined) {
+                  finalOptions.deleteDeny = !!item.deleteDeny
+                }
+
+            } else if (typeof item === 'object') {
+              //如果item是obejct 但是没有rule属性，说明可能本身就是规则
+                finalOptions = {
+                    key,
+                    rule: item
+                }
             }
+
+            autoMids.push({
+              middleware: new ParamCheck(finalOptions),
+              handler: [ handlerName ]
+            })
         })
     }
-    
-    // 校验规则优先执行
-    return [...autoMids, ...manualMids]
+
+    //只返回rules定义好的，其他的顺序交给开发者自行处理
+    return autoMids
 }
 ```
 
@@ -139,82 +207,71 @@ exports.mixin = (manualMids = [], rules = {}) => {
 ## 4. Controller 开发规范 (The Consumer)
 
 控制器必须遵循以下结构：
-1.  **引入工具**: `toRule` (适配器) 和 `mixin` (混合器)。
-2.  **`get rules()`**: 定义每个 Handler 的校验逻辑。
-    *   使用 `toRule(Model)` 复用 DB 规则。
+1.  **引入工具**: `modelRule` (适配器) 和 `mixinMids` (混合器)。
+2.  **`get rules()`**: 定义每个 handler 的校验逻辑。
+    *   使用 `modelRule(Model)` 提取DB Model中的rule。
     *   使用字面量对象 `{ key: rule }` 定义特有规则。
-3.  **`__mid()`**: 调用 `mixin` 注册中间件。
-4.  **Handlers**: 具体的业务函数（如 `post`, `get`, `list`）。
+3.  **`__mid()`**: 调用 `mixinMids` 返回中间件数组。
+4.  **handler**: 具体的业务函数（如 `post`, `get`, `list`）。
 
-**代码示例:**
+**模板:**
 
 ```javascript
-// controller/user.js
-const UserModel = require('../model/user_model')
-const { toRule } = require('../lib/adapter')
-const { mixin } = require('../framework/util')
+//根据目录结构决定，假设UserController就在controller目录下
+const User = require('../model/User.js')
+const { modelRule, mixinMids } = require('../framework/adapter.js')
 
 class UserController {
-
-    // 1. 规则配置 (SSOT)
+    // 1. 定义规则
     get rules() {
         return {
-            // 场景 A: 创建 (POST)
-            // 直接复用 Model 定义的 username, age 规则
             post: {
-                body: toRule(UserModel, { pick: ['username', 'age'] })
+                // 开启 denyNotRule 并自动删除非法字段
+                body: modelRule(User, {must: ['username', 'passwd'], denyNotRule: true, deleteDeny: true})
             },
-
-            // 场景 B: 列表 (GET)
-            // 手动定义 Query 规则 (Model 中没有 page/size)
+            //完整结构是传递rule属性
+            put: {
+                body: {
+                    rule: modelRule(User, {denyNotRule: true, deleteDeny: true})
+                }
+            },
             list: {
-                query: {
-                    page: { to: 'int', default: 1, min: 1 },
-                    size: { to: 'int', default: 20, max: 100 },
-                    keyword: { must: false }
-                }
-            },
-            
-            // 场景 C: 详情 (GET /:id)
-            // 混合使用：校验路由参数
-            info: {
-                param: {
-                    id: { to: 'int', must: true }
-                }
+                query: { page: { to: 'int', default: 1 } }
             }
         }
     }
 
-    // 2. 中间件注入
+    // 2. 注册中间件
     __mid() {
-        // 定义手动中间件 (如 权限控制)
+        const auto = mixinMids(this.rules)
+
+        // 手动中间件示例：检测数据类型
         const manual = [
-            { name: 'Auth', handler: ['post', 'info'] } // 仅 post 和 info 需要登录
+            {
+                middleware: async(ctx, next) => {
+                    if (!ctx.body || typeof ctx.body !== 'object') {
+                        return ctx.status(400).to('bad data')
+                    }
+
+                    await next(ctx)
+                },
+
+                handler: ['post', 'put']
+            }
         ]
-
-        // 自动合并
-        return mixin(manual, this.rules)
+        
+        // 顺序视需求而定
+        return [...manual, ...auto]
     }
 
-    // 3. 业务逻辑 (Handlers)
-    
     async post(ctx) {
-        // 数据已清洗，直接入库
-        await ctx.service.user.create(ctx.body)
-        ctx.to({ id: 1 })
+        // ...
     }
 
-    async list(ctx) {
-        // ctx.query.page 已经是 int 类型
-        const { page, size } = ctx.query
-        // ...
-    }
-    
-    async info(ctx) {
-        // ...
+    async put(ctx) {
+        //...
     }
 }
-
 module.exports = UserController
 ```
 
