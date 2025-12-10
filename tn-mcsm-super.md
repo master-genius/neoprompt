@@ -426,11 +426,11 @@ const count = await query.clone().count();
     *   **C**ontroller (路由分发与响应)
     *   **S**ervice (业务编排，去容器化，使用原生模块)
     *   **M**odel (数据库表结构基础Model)
+5.  Loader是按照controller目录结构以及文件中的`this.param`属性映射为路由，子目录和文件的名字都应该小写，统一路由规则。
 
 # PART 1: 项目架构与目录规范(MCSM模式)
 
 你生成的项目结构必须体现“分层解耦”思想，禁止将业务逻辑堆积在 Controller 或 Model 中。
-开展项目应该首选此目录架构，其次是MCM。
 
 ```text
 project/
