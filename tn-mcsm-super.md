@@ -170,16 +170,27 @@ app.run(3000)
 
 // --- controller/user.js ---
 class User {
-    // 静态方法定义该文件的专属中间件
-    static __mid() {
+    constructor() {
+        //定义路由的最后参数部分，默认是 /:id，可以自定义，比如： /:name/:mobile
+        this.param = '/:id'
+        //路由根据RESTful规则进行加载
+    }
+
+    // 定义该文件的专属中间件
+    __mid() {
         return [
             // 示例：仅对 info 接口进行 token 校验
             // { name: '@auth', method: 'GET' } 
         ]
     }
 
-    // POST /api/user/login
-    async login(ctx) {
+    // GET /api/user/:id
+    async get(ctx) {
+
+    }
+
+    // POST /api/user
+    async post(ctx) {
         const { username, password } = ctx.body
         
         // 使用注入的 db
@@ -196,8 +207,11 @@ class User {
         })
     }
 
-    // GET /api/user/info
-    async info(ctx) {
+    // PUT /api/usr/:id
+    async put(ctx) {}
+
+    // GET /api/user 此路由表示获取列表
+    async list(ctx) {
         const uid = ctx.query.uid
         ctx.to({ name: 'Topbit User', id: uid })
     }
@@ -487,6 +501,27 @@ if (app.isWorker) {
     }).init(app)
 }
 app.run(3000)
+```
+
+#### Loader路由加载规范
+
+- controller下的路径会进行路由映射，所以路径不能有空格等不符合URL规范的字符
+- controller仅支持一级子目录，比如： /api/user
+- 路由拼接方式：使用文件路径+代码中`this.param`属性指定的字符串根据RESTful规范进行路由映射
+- 示例：存在文件 controller/api/content.js
+```
+路由前缀：/api/content
+默认`this.param`： `/:id`
+小写的请求函数名称就是HTTP请求方法，比如：async get(ctx)、async post(ctx)
+    
+GET /api/content/:id 对应执行函数 async get(ctx){}
+POST /api/content  对应执行函数 async post(ctx){}
+PUT /api/content/:id 对应执行函数 async put(ctx){}
+
+//函数async delete(ctx){}也可以，使用一个即可
+DELETE /api/content/:id 对应执行函数 async _delete(ctx){}
+
+GET /api/content 对应执行函数 async list(ctx){}
 ```
 
 ---

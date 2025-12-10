@@ -192,8 +192,8 @@ app.run(3000)
 
 // --- controller/user.js ---
 class User {
-    // 静态方法定义该文件的专属中间件
-    static __mid() {
+    // 定义该文件的专属中间件
+    __mid() {
         return [
             // 示例：仅对 info 接口进行 token 校验
             // { name: '@auth', method: 'GET' } 
