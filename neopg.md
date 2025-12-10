@@ -99,14 +99,20 @@ const { ModelChain, dataTypes } = NeoPG;
 class Product extends ModelChain {
   static schema = {
     tableName: 'products',
+    //主键不能出现到unique中，因为自动就是unique索引
+    primaryKey: 'id',
     column: {
       id: { type: dataTypes.ID }, // 自动生成 ID
-      name: { type: dataTypes.STRING(100), required: true },
+      name: { type: dataTypes.STRING(100)},
       price: { type: dataTypes.DECIMAL(10, 2) },
+      orgid: {type: dataTypes.ID},
       tags: { type: dataTypes.JSONB }, // 原生 JSON 支持
       created_at: { type: dataTypes.BIGINT, timestamp: 'insert' }
     },
-    index: ['name']
+    //索引
+    index: ['name'],
+    //唯一索引，多个列使用 , 连接
+    unique: ['orgid,name']
   }
 
   //自定义处理方法封装基础操作
