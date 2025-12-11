@@ -10,7 +10,7 @@
 3.  **逻辑分离**: HTML 只负责结构（通过 `data-*` 属性标记），JS 负责逻辑和渲染（通过模板字符串）。
 4.  **配置驱动**: 通过 `config.json` 管理路由、扩展和组件。
 5.  **应用入口 (`app.js`)**: 类似于 C 语言的 `main` 函数，是应用启动的起点，运行在异步闭包中，支持**顶层 await**。
-6.  **构建驱动**: 代码经过 `pw.js` (构建工具) 处理，支持特殊语法糖（如 `<-('ext')`）和自动化打包。
+6.  **构建驱动**: 代码经过 `pw.js` (构建工具) 处理，支持特殊语法糖（如 `<-('htmltag')`）和自动化打包。
 
 ---
 
@@ -131,6 +131,20 @@ node createproject.js --empty [项目名称]
 
 ## 3. 开发规范与代码模式
 
+### 3.0 wight设计精神总则
+
+
+- **基座通信**：w作为全局对象，是一个基座，它提供通用接口以及通信规范，页面和页面之间，组件和组件之间，可以通过w.share、w.registerShareNotice进行类似于总线注册式的通信。
+
+- **闭包式设计**：页面、组件都是单独一个目录，采用data-on*进行事件函数绑定，示例：`data-onclick="handleClick"`，handleClick是所属页面或组件的js文件的方法。
+
+- **全面利用模板字符串**：利用JS的模板字符串以及字符串字面量函数的特点，并结合内置扩展htmltag函数进行过滤，防止XSS，示例：
+```javascript
+htmltag`<div>${text}</div>`
+```
+
+**开发过程必须严格遵守精神总则，不要随意扩展导致混乱。**
+
 ### 3.1 项目结构
 ```text
 /config.json      # 项目配置 (路由, 扩展, 组件css)
@@ -203,7 +217,7 @@ w.initOnePage('home');
 *   **绑定数据**: `<div data-name="username"></div>`
 *   **绑定渲染函数**: `<div data-name="list" data-map="renderList"></div>`
 *   **绑定事件**: `<button data-onclick="submitForm">Submit</button>`
-    *   支持修饰符: `data-onclick="func:once"` (执行一次), `func:capture` (捕获)。
+    *   支持修饰符: `data-onclick="func:o"` (执行一次), `func:c` (捕获)。
 *   **样式**: 使用 CSS 变量 (如 `var(--w-page-bg-color)`) 保持主题一致。
 
 ### 3.4 扩展与工具 (Extensions)
@@ -373,6 +387,7 @@ class ImageSlide extends Component {
 
   // 4. 后置处理 (DOM 已挂载)
   afterRender() {
+    //简化的调用方式，相当于this.view({imagebox: this.images.map(...)})
     this.view('imagebox', this.images.map(...)); // 数据绑定
     this.bindEvent(this.query('.box')); // 手动绑定事件
   }
