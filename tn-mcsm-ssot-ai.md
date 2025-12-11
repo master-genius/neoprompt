@@ -189,6 +189,7 @@ project/
 ├── middleware/             # 通用中间件
 ├── services/               # 业务层 (PascalCase)
 ├── controller/             # 控制层 (LowerCase, RESTful)
+│   ├── __mid.js            # 中间件配置模块
 └── model/                  # 模型层 (PascalCase, SSOT source)
 ```
 
@@ -445,6 +446,38 @@ app.autoWorker(config.autoWorker || 8)
 
 app.daemon(config.port || 1234, config.host || '0.0.0.0', config.worker || 1)
 ```
+
+## 4.4 中间件配置模块：__mid.js
+
+controller/__mid.js是全局中间件配置，会对controller下所有的路由起作用，除非指定了method选项设定了具体的HTTP请求方法。
+
+示例模板：
+```javascript
+'use strict'
+
+const {Cors} = require('topbit').extensions
+const config = require('../config/config.js')
+
+module.exports = [
+    {
+        //使用middleware指定具体中间件实例
+        middleware: new Cors(config.cors),
+        pre: true
+    },
+
+    {
+        //使用name指定middleware目录下的中间件模块：id-parse.js
+        name: 'id-parse',
+        //虽然是全局启用，但是只对DELETE请求方法起作用
+        method: [
+            'DELETE'
+        ]
+    }
+]
+
+```
+
+**controller/api/__mid.js只会对controller/api目录下的路由起作用，分组结构十分清晰。**
 
 ---
 
