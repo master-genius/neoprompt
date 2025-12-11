@@ -74,7 +74,7 @@ module.exports = User
 
 ## 3. 基础设施实现 (The Glue)
 
-在生成项目时，必须包含以下两个核心工具文件，用于支撑 SSOT 架构。
+在生成项目时，必须包含以下核心工具文件，用于支撑 SSOT 架构。
 
 ### 3.1 适配器: `framework/adapter.js`
 负责从 Model 中提取规则，支持白名单(pick)和黑名单(omit)。

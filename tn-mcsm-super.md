@@ -540,6 +540,8 @@ GET /api/content 对应执行函数 async list(ctx){}
 
 **framework/db.js 模板:**
 ```javascript
+'use strict'
+
 const NeoPG = require('neopg')
 const config = require('../config/database.js')
 
@@ -554,6 +556,8 @@ module.exports = db
 *   规范: 使用 `static schema` 定义表结构。
 
 ```javascript
+'use strict'
+
 // model/user_model.js
 const { ModelChain, dataTypes } = require('neopg')
 
@@ -579,9 +583,12 @@ module.exports = User
 
 Service 层必须是**无状态的单例**，通过 `require` 引用，通过继承 `BaseService` 获得通用能力。
 
-## 4.1 BaseService (framework/base_service.js)
+## 4.1 BaseService模块：`framework/base_service.js`
+
 ```javascript
-const db = require('./db.js') // 自动感知的 DB 实例
+'use strict'
+
+const db = require('./db.js')
 
 class BaseService {
     constructor(modelName) {
@@ -600,15 +607,97 @@ class BaseService {
     }
 
     async create(data) {
-        return this.model.insert(data)
+        return this.model.insert(data).returning('*')
     }
 
-    // ... update, delete, info
+    async update(where, data) {
+        return this.model.where(where).update(data).returning('*')
+    }
+
+    async delete(where) {
+        return this.model.where(where).delete()
+    }
+
+    async info(where) {
+        return this.model.where(where).get()
+    }
+
+    async find(where = {}) {
+        return this.model.where(where).find()
+    }
 }
+
 module.exports = BaseService
 ```
 
-## 4.2 业务 Service (services/user_service.js)
+## 4.2 基础控制器类文件：`framework/base_controller.js`
+
+```javascript
+'use strict'
+
+/**
+ * 基础控制器类
+ * 提供通用的控制器方法
+ */
+class BaseController {
+  /**
+   * 统一响应格式
+   * @param {Object} ctx - 上下文对象
+   * @param {any} data - 响应数据
+   * @param {number} code - 状态码
+   * @param {string} message - 消息
+   */
+  success(ctx, data = null, code = 200, message = 'success') {
+    ctx.status(code).to({
+      code,
+      message,
+      data
+    })
+  }
+
+  /**
+   * 统一错误响应格式
+   * @param {Object} ctx - 上下文对象
+   * @param {string} message - 错误消息
+   * @param {number} code - 错误码
+   */
+  error(ctx, message = 'error', code = 400) {
+    ctx.status(code).to({
+      code,
+      message,
+      data: null
+    })
+  }
+
+  /**
+   * 分页响应
+   * @param {Object} ctx - 上下文对象
+   * @param {Array} list - 数据列表
+   * @param {number} total - 总数
+   * @param {Object} pagination - 分页信息
+   */
+  paginate(ctx, list, total, pagination = {}) {
+    const { page = 1, size = 20 } = pagination
+    ctx.status(200).to({
+      code: 200,
+      message: 'success',
+      data: {
+        list,
+        total,
+        page: parseInt(page),
+        size: parseInt(size),
+        pages: Math.ceil(total / size)
+      }
+    })
+  }
+}
+
+module.exports = BaseController
+```
+
+
+
+## 4.3 业务 Service示例：`services/UserService.js`
 ```javascript
 const BaseService = require('../framework/base_service.js')
 
@@ -640,7 +729,7 @@ module.exports = new UserService()
 
 ```javascript
 // controller/user.js
-const userService = require('../services/user_service.js')
+const userService = require('../services/UserService.js')
 const db = require('../framework/db.js')
 
 class UserController {
@@ -747,7 +836,7 @@ module.exports = User
 
 ## 3. 基础设施实现 (The Glue)
 
-在生成项目时，必须包含以下核心工具文件，用于支撑 SSOT 架构。
+**在生成项目时，必须包含以下核心工具文件，用于支撑 SSOT 架构。**
 
 ### 3.1 适配器: `framework/adapter.js`
 负责从 Model 中提取规则，支持白名单(pick)和黑名单(omit)。
@@ -949,3 +1038,16 @@ module.exports = UserController
 ```
 
 ---
+
+## 5. 命名规范
+
+- services目录下的文件都遵循`PascalCase`命名法，代码中类名字也采用此方式
+- controller目录下目录和文件名字都小写，单词之间采用'-'连字符分割
+- controller文件内的代码class命名采用`PascalCase`命名法，示例：'UserController'
+- model目录下的文件都遵循`PascalCase`命名法，最后不必带有`Model`后缀，示例：'User'
+
+## 6. 框架确认
+
+- framework目录需要存在文件：db.js、base_serivce.js、base_controller.js、adapter.js
+- config目录需要存在文件：config.js、database.js
+- config/config.js中存在port、host、cert、key等配置项
