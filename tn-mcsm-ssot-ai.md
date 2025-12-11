@@ -355,17 +355,52 @@ class UserController extends BaseController {
     get rules() {
         return {
             post: {
+                //modelRule返回值已包含rule和其他选项
                 body: modelRule(User, { must: ['username'], denyNotRule: true })
+            },
+            put: {
+                body: modelRule(User, {denyNotRule: true, deleteDeny: true})
             },
             list: {
                 query: { page: { to: 'int', default: 1 } }
+            },
+            //标准格式：包含rule和其他选项
+            patch: {
+                body: {
+                    rule: {
+                        age: {
+                            to: 'int',
+                            default: 18
+                        }
+                    },
+                    deny: ['id', 'created_at'],
+                    deleteDeny: true
+                }
             }
         }
     }
 
     // 2. 注入中间件
     __mid() {
-        return mixinMids(this.rules)
+        const auto = mixinMids(this.rules)
+
+        // 手动中间件示例：检测数据类型
+        const manual = [
+            {
+                middleware: async(ctx, next) => {
+                    if (!ctx.body || typeof ctx.body !== 'object') {
+                        return ctx.status(400).to('bad data')
+                    }
+
+                    await next(ctx)
+                },
+
+                handler: ['post', 'put']
+            }
+        ]
+        
+        // 顺序视需求而定
+        return [...manual, ...auto]
     }
 
     // POST /user
@@ -410,3 +445,35 @@ app.autoWorker(config.autoWorker || 8)
 
 app.daemon(config.port || 1234, config.host || '0.0.0.0', config.worker || 1)
 ```
+
+---
+
+## PART 5: 命名规范与文件映射 (Naming Conventions)
+
+为了确保 `Loader` 能够正确映射路由以及 `require` 路径的一致性，请严格遵守以下命名规则：
+
+1.  **文件与目录命名**:
+    *   **Controller**: 必须使用 **kebab-case** (小写，连字符)。
+        *   原因: 文件名直接映射为 URL 路径。
+        *   示例: `controller/user-profile.js` -> `/user-profile`。
+    *   **Service**: 必须使用 **PascalCase** (大驼峰)。
+        *   示例: `services/UserService.js`, `services/OrderService.js`。
+    *   **Model**: 必须使用 **PascalCase** (大驼峰)。
+        *   示例: `model/User.js`, `model/ProductLog.js`。
+    *   **Framework/Config**: 使用 **snake_case** (下划线)。
+        *   示例: `framework/base_service.js`, `config/database.js`。
+
+2.  **类 (Class) 命名**:
+    *   **所有类定义**: 必须使用 **PascalCase**。
+    *   **Controller 类**: 文件名转大驼峰 + `Controller` 后缀。
+        *   示例: `controller/user-profile.js` -> `class UserProfileController`。
+    *   **Service 类**: 文件名保持一致。
+        *   示例: `services/UserService.js` -> `class UserService`。
+
+3.  **变量与实例命名**:
+    *   **Service 实例**: 引入时使用 **camelCase** (小驼峰)。
+        *   示例: `const userService = require('../services/UserService.js')`。
+    *   **Model 引用**: 引入时使用 **PascalCase** (与类名一致)。
+        *   示例: `const User = require('../model/User.js')`。
+
+---

@@ -991,11 +991,8 @@ class UserController {
                 // 开启 denyNotRule 并自动删除非法字段
                 body: modelRule(User, {must: ['username', 'passwd'], denyNotRule: true, deleteDeny: true})
             },
-            //完整结构是传递rule属性
             put: {
-                body: {
-                    rule: modelRule(User, {denyNotRule: true, deleteDeny: true})
-                }
+                body: modelRule(User, {denyNotRule: true, deleteDeny: true})
             },
             list: {
                 query: { page: { to: 'int', default: 1 } }
