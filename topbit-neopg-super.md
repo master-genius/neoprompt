@@ -292,6 +292,9 @@ class NeoPG {
     loadModels(dir: string): Promise<void>;
     sync(opts?: { force: boolean }): Promise<void>;
     transaction(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;
+    has(modelname: stirng): boolean;
+    //加载指定的文件列表，内部会调用add方法
+    loadFiles(files: array): Promise<void>;
 }
 
 // 链式构造器
