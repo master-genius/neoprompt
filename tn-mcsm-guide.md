@@ -18,7 +18,7 @@
 - config目录下也会存在其他配置文件，由项目开发者自定义
 - framework目录允许开发者自定义一些其他核心模块文件
 - tmp目录是缓存目录，服务运行创建的日志文件等会存放到此目录
-
+- 不要自动在入口文件使用app.addService()添加services实例
 
 ## 路由控制器规范
 
@@ -55,7 +55,7 @@ const token = new TopbitToken({
   refresh   : true                                // 开启自动刷新（最后 1/5 时间刷新）
 })
 
-module.exports = token   // 直接导出实例，TopbitLoader 自动识别
+module.exports = token   // 直接导出实例
 ```
 
 ```javascript
