@@ -36,8 +36,43 @@
 - lib目录是通用模块目录
 - 此目录下存放可以被其他各个部分引用的通用模块
 
----
-
 ## storage目录
 
 - 存放上传的文件
+
+
+## Token验证
+
+- 不需安装其他扩展，Topbit.Token即可完成验证
+- 示例代码：
+```javascript
+const Topbit = require('topbit')
+const TopbitToken = Topbit.Token
+
+const token = new TopbitToken({
+  key       : 'your-32-byte-secret-key-here!!',   // 必须 32 字节（AES-256）
+  expires   : 60 * 60 * 24,                       // 24 小时（单位：秒）
+  refresh   : true                                // 开启自动刷新（最后 1/5 时间刷新）
+})
+
+module.exports = token   // 直接导出实例，TopbitLoader 自动识别
+```
+
+```javascript
+// controller/user.js
+class User {
+  async post(c) {                     // POST /user/login
+    // 登录验证成功后
+    let userinfo = {
+      uid   : 10010,
+      name  : 'Alice',
+      role  : 'admin',
+      // expires 可单独设置更长时间
+    }
+
+    //签发token并返回
+    c.to({token: token.makeToken(userinfo)})
+  }
+}
+
+```
