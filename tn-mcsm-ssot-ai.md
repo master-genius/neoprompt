@@ -210,34 +210,86 @@ module.exports = db
 **2. framework/base_service.js (Service 基类)**
 ```javascript
 'use strict'
+
 const db = require('./db.js')
+
 class BaseService {
     constructor(modelName) {
         this.db = db
         this.modelName = modelName
+        this.self = db.model(modelName)
     }
-    // 动态获取 Model，兼容事务上下文
-    get model() { return db.model(this.modelName) }
+    
+    // 动态获取 Model，自动适配事务
+    get model() {
+        return db.model(this.modelName)
+    }
 
-    async list(page = 1, size = 20, where = {}) {
-        return this.model.page(page, size).where(where).findAndCount()
+    /**
+     * 
+     * @param {number} page - default 1
+     * @param {number} size - default 20 
+     * @param {object} options - support: where fields 
+     * @returns 
+     */
+    async list(page=1, size=20, options={}) {
+        let where = options.where || {}
+        let fields = options.fields || null
+
+        return this.model.page(page, size).where(where).select(fields).findAndCount()
     }
-    async create(data) {
-        return this.model.insert(data).returning('*')
+
+    /**
+     * 
+     * @param {object} data 
+     * @param {string|array} returning 
+     * @returns 
+     */
+    async create(data, returning='*') {
+        return this.model.returning(returning).insert(data)
     }
-    async update(where, data) {
-        return this.model.where(where).update(data).returning('*')
+
+    /**
+     * 
+     * @param {object|string} where
+     * @param {object} data
+     * @param {string|array} returning
+     * @returns
+     */
+    async update(where, data, returning='*') {
+        return this.model.where(where).returning(returning).update(data)
     }
-    async delete(where) {
+
+    /**
+     * 
+     * @param {object|string} where 
+     * @param {string|array} returning
+     * @returns
+     */
+    async delete(where, returning='') {
+        if (returning) return this.model.where(where).returning(returning).delete()
         return this.model.where(where).delete()
     }
-    async info(where) {
+
+    /**
+     * 
+     * @param {object|string} where 
+     * @returns 
+     */
+    async get(where) {
         return this.model.where(where).get()
     }
-    async find(where = {}) {
-        return this.model.where(where).find()
+
+    /**
+     * 
+     * @param {object|string} where 
+     * @returns 
+     */
+    async find(where={}, fields='') {
+        return this.model.where(where).select(fields).find()
     }
 }
+
 module.exports = BaseService
 ```
 
