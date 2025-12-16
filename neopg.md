@@ -50,12 +50,12 @@ class NeoPG {
     // 方法
     model(name: string): ModelChain;
     define(modelClass: Class): void;
-    loadModels(dir: string): Promise<void>;
+    loadModels(dir: string, modtype?: string): Promise<void>;
     sync(opts?: { force: boolean }): Promise<void>;
     transaction(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;
     has(modelname: stirng): boolean;
     //加载指定的文件列表，内部会调用add方法
-    loadFiles(files: array): Promise<void>;
+    loadFiles(files: array, modtype?: string): Promise<void>;
 }
 
 // 链式构造器

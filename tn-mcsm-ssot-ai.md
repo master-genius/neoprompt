@@ -107,6 +107,7 @@ class NeoPG {
     // 方法
     model(name: string): ModelChain;
     define(modelClass: Class): void;
+    //加载目录下的Model
     loadModels(dir: string): Promise<void>;
     sync(opts?: { force: boolean }): Promise<void>;
     transaction(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;
