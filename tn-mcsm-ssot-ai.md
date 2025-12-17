@@ -325,10 +325,16 @@ exports.modelRule = (Model, options = {}) => {
 
     if ((!modelOptions.deny || !Array.isArray(modelOptions.deny)) && denylist.length > 0) {
       modelOptions.deny = denylist
+    } else if (Array.isArray(modelOptions.deny)) {
+      denylist.forEach(x => {
+        !modelOptions.deny.includes(x) && modelOptions.deny.push(x)
+      })
     }
+
     if (options.deleteDeny !== undefined) {
       modelOptions.deleteDeny = !!options.deleteDeny
     }
+
     return { rule: ruleMap, ...modelOptions }
 }
 
