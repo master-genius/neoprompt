@@ -165,7 +165,7 @@ htmltag`<div>${text}</div>`
 ### 3.2 页面代码示例 (Page Pattern)
 ```javascript
 // pages/home/home.js
-class HomePage {
+class Page {
   constructor() {
     this.display = {}; // 可选：默认的 data-map 处理函数集合
   }
@@ -208,9 +208,6 @@ class HomePage {
   }
 }
 
-// 注册页面
-w.pages['home'] = new HomePage();
-w.initOnePage('home');
 ```
 
 ### 3.3 HTML 编写规范
