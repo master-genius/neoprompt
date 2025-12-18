@@ -202,9 +202,18 @@ project/
 **1. framework/db.js (数据库单例)**
 ```javascript
 'use strict'
+
 const NeoPG = require('neopg')
-const config = require('../config/database.js')
+const originalConfig = require('../config/database.js')
+
+let config = originalConfig
+if (process.env.NEOPG_CMD) {
+  config = {...originalConfig}
+  config.max = 2
+}
+
 const db = new NeoPG(config)
+
 module.exports = db
 ```
 
