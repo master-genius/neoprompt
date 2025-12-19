@@ -391,7 +391,13 @@ v4.0 引入 `w.builtin`，导入语法为 `<-('w:modName')`。
 *   **Object**: `obj.renders(callback, firstText, endText)`
 *   **示例**:
     ```javascript
-    data.renders(item => htmltag`<li>${item}</li>`, '<ul>', '</ul>');
+    //数组，第一个元素是具体值，第二个元素是索引
+    list.renders((item, ind) => {
+      return htmltag`<div row c-12 mtop>${ind+1}. ${item.title}</div>`
+    }, '<div data-name=cells>', '</div>');
+    
+    //object，第一个元素是具体值，第二个元素是key值
+    data.renders((item,k) => htmltag`<li>${item}</li>`, '<ul>', '</ul>');
     ```
 
 ### 5.3 安全模板 (`w:htmltag`)
