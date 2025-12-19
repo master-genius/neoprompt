@@ -314,7 +314,7 @@ exports.modelRule = (Model, options = {}) => {
     if (!Model || !Model.schema) return { rule: {} }
     const columns = Model.schema.column
     const modelOptions = Model.schema.ruleOptions || {}
-    const denyNotRule = true
+    let denyNotRule = true
     if (options.denyNotRule !== undefined) {
       denyNotRule = !!options.denyNotRule
     } else if (Model.schema.denyNotRule !== undefined) {
