@@ -386,6 +386,7 @@ exports.mixinMids = (rules = {}) => {
 **4. framework/base_controller.js (基础控制器类文件)**
 
 - 路由控制器可继承自BaseController，实现统一快速的响应格式。
+- 也可以不继承，若不指定，默认不继承。
 
 ```javascript
 'use strict'
@@ -395,24 +396,6 @@ exports.mixinMids = (rules = {}) => {
  * 提供通用的控制器方法
  */
 class BaseController {
-  /**
-   * 统一响应格式
-   * @param {Object} ctx - 上下文对象
-   * @param {any} data - 响应数据
-   */
-  success(ctx, data='') {
-    ctx.status(200).to(data)
-  }
-
-  /**
-   * 统一错误响应格式
-   * @param {Object} ctx - 上下文对象
-   * @param {string} message - 错误消息
-   */
-  error(ctx, message='error') {
-    ctx.status(400).to(message)
-  }
-
   /**
    * 分页响应
    * @param {Object} ctx - 上下文对象
@@ -476,9 +459,8 @@ module.exports = User
 const User = require('../model/User.js')
 const userService = require('../services/UserService.js')
 const { modelRule, mixinMids } = require('../framework/adapter.js')
-const BaseController = require('../framework/base_controller.js')
 
-class UserController extends BaseController {
+class UserController {
     constructor() {
         super()
         this.param = '/:id' // 定义路由参数
@@ -538,9 +520,13 @@ class UserController extends BaseController {
 
     // POST /user
     async post(ctx) {
-        const { username, age } = ctx.body
-        const user = await userService.register(username, age)
-        this.success(ctx, user)
+        try {
+            const { username, age } = ctx.body
+            const user = await userService.register(username, age)
+            ctx.to(user)
+        } catch (err) {
+            return ctx.status(400).to(err.message)
+        }
     }
     
     // GET /user
@@ -563,20 +549,26 @@ const config = require('./config/config.js')
 
 const app = new Topbit({ maxBody: 1024 * 1024 })
 
-if (app.isWorker) {
-    new Loader({
-        prePath: '/api',
-        fileAsGroup: true,
-        modelLoader: async () => {
-            await db.loadModels('./model') // 加载 Model
-            await db.sync() // 同步 Schema
-        }
-    }).init(app)
-}
 
 app.autoWorker(config.autoWorker || 8)
 
-app.daemon(config.port || 1234, config.host || '0.0.0.0', config.worker || 1)
+let tbl = new Loader({
+    //如果需要
+    //prePath: '/w',
+    fileAsGroup: true,
+    modelLoader: async () => {
+        await db.loadModels('./model') // 加载 Model
+        await db.sync() // 同步 Schema
+    }
+})
+    
+//自动判断是否为Worker，Worker才会进行加载，然后都会去执行回调函数启动服务
+tbl.daemonInit(app, () => {
+    //加载完成后执行回调函数
+    app.printServInfo()
+      .daemon(config.port || 1234, config.host || '0.0.0.0', config.worker || 1)
+})
+
 ```
 
 ## 4.4 中间件配置模块：__mid.js
