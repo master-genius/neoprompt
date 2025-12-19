@@ -89,7 +89,10 @@ class Loader {
         modelLoader?: (service: Object) => Promise<void>; // 自定义模型加载
     });
     
-    init(app: Topbit): void;
+    //若不使用app.daemon接口则使用此接口。
+    init(app: Topbit, callback: function): void;
+    //在调用app.daemon接口使用daemonInit会自动判断是否为Worker并进行初始化。
+    daemonInit(app: Topbit, callback: function): void;
 }
 ```
 
