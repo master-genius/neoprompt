@@ -399,29 +399,18 @@ class BaseController {
    * 统一响应格式
    * @param {Object} ctx - 上下文对象
    * @param {any} data - 响应数据
-   * @param {number} code - 状态码
-   * @param {string} message - 消息
    */
-  success(ctx, data = null, code = 200, message = 'success') {
-    ctx.status(code).to({
-      code,
-      message,
-      data
-    })
+  success(ctx, data='') {
+    ctx.status(200).to(data)
   }
 
   /**
    * 统一错误响应格式
    * @param {Object} ctx - 上下文对象
    * @param {string} message - 错误消息
-   * @param {number} code - 错误码
    */
-  error(ctx, message = 'error', code = 400) {
-    ctx.status(code).to({
-      code,
-      message,
-      data: null
-    })
+  error(ctx, message='error') {
+    ctx.status(400).to(message)
   }
 
   /**
@@ -434,15 +423,11 @@ class BaseController {
   paginate(ctx, list, total, pagination = {}) {
     const { page = 1, size = 20 } = pagination
     ctx.status(200).to({
-      code: 200,
-      message: 'success',
-      data: {
-        list,
-        total,
-        page: parseInt(page),
-        size: parseInt(size),
-        pages: Math.ceil(total / size)
-      }
+      list,
+      total,
+      page: parseInt(page),
+      size: parseInt(size),
+      pages: Math.ceil(total / size)
     })
   }
 }
