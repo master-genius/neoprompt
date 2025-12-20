@@ -172,6 +172,9 @@ class ModelChain {
     *   文件 `controller/api/user.js` -> 路由前缀 `/api/user`。
     *   `this.param` 定义 ID 参数（默认 `/:id`）。
     *   方法名即 HTTP 方法：`get()`, `post()`, `put()`, `_delete()` (注意 delete 前有下划线), `list()` (无参数 GET)。
+    *   只有get、post、put、_delete、patch、list、options、head方法会被映射为对应HTTP请求方法的路由，这些方被称为路由方法。其他方法都是在路由方法中调用的。
+    *   常用方法是：get、post、_delete、list、put，偶尔特别需求会用到patch、Loader会自动添加OPTIONS请求，无需控制器层面处理。
+    *   控制器中rules规则只能对路由方法起作用。
 
 7.  **文件上传**: 获取文件使用 `ctx.getFile('fieldname')`，保存文件推荐使用扩展 `ToFile` 或 `ctx.moveFile`。
 
