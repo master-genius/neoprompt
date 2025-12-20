@@ -177,6 +177,7 @@ class ModelChain {
     *   控制器中rules规则只能对路由方法起作用。
 
 7.  **文件上传**: 获取文件使用 `ctx.getFile('fieldname')`，保存文件推荐使用扩展 `ToFile` 或 `ctx.moveFile`。
+8.  **Services实例**：services目录下的模块导出是new操作之后的实例，采用全局单例模式，避免重复实例化。
 
 ---
 
@@ -480,7 +481,11 @@ class UserController {
                 body: modelRule(User, {denyNotRule: true, deleteDeny: true})
             },
             list: {
-                query: { page: { to: 'int', default: 1 } }
+                query: {
+                  rule: {
+                    page: { to: 'int', default: 1 }
+                  }
+                }
             },
             //标准格式：包含rule和其他选项
             patch: {
