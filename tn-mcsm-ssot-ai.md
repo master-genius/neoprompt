@@ -125,7 +125,7 @@ class ModelChain {
     constructor(ctx: NeoPG, model: object, schema:string = 'public');
     
     // 查询构建
-    select(cols: string | string[]): this;
+    select(cols: string | string[] | sqlFragment: Fragment): this;
     where(obj: Object): this;
     where(field: string, op: string, val: any): this; // e.g. where('age', '>', 18)
     where(sqlFragment: Fragment): this; // e.g. where(sql`age > ${18}`)
