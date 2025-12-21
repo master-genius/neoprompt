@@ -33,6 +33,22 @@
 
 - 允许模型文件存在syncinit方法，此方法用于在同步数据结构之后运行一些初始化工作
 
+## services层注意事项
+
+- 导出为单例模式，直接使用new操作：
+```javascript
+'use strict'
+
+const BaseService = require('../framework/base_service.js')
+
+class UserService extends BaseService {
+    //...
+}
+
+//导出实例，作为全局单例存在，service层目的是为了执行业务逻辑，不必每次进行new操作
+module.exports = new UserService()
+```
+
 ## lib目录
 
 - lib目录是通用模块目录
