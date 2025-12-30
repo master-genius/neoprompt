@@ -430,7 +430,6 @@ const { modelRule, mixinMids } = require('../framework/adapter.js')
 
 class UserController {
     constructor() {
-        super()
         this.param = '/:id' // 定义路由参数
     }
 
