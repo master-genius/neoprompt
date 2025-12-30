@@ -195,8 +195,7 @@ project/
 ├── framework/              # 核心层 (必须包含)
 │   ├── db.js               # 数据库单例
 │   ├── adapter.js          # SSOT 适配器 (Model -> ParamCheck)
-│   ├── base_service.js     # Service 基类
-│   └── base_controller.js  # Controller 基类
+│   └── base_service.js     # Service 基类
 ├── middleware/             # 通用中间件
 ├── services/               # 业务层 (PascalCase)
 ├── controller/             # 控制层 (LowerCase, RESTful)
@@ -385,41 +384,6 @@ exports.mixinMids = (rules = {}) => {
     }
     return autoMids
 }
-```
-
-**4. framework/base_controller.js (基础控制器类文件)**
-
-- 路由控制器可继承自BaseController，实现统一快速的响应格式。
-- 也可以不继承，若不指定，默认不继承。
-
-```javascript
-'use strict'
-
-/**
- * 基础控制器类
- * 提供通用的控制器方法
- */
-class BaseController {
-  /**
-   * 分页响应
-   * @param {Object} ctx - 上下文对象
-   * @param {Array} list - 数据列表
-   * @param {number} total - 总数
-   * @param {Object} pagination - 分页信息
-   */
-  paginate(ctx, list, total, pagination = {}) {
-    const { page = 1, size = 20 } = pagination
-    ctx.status(200).to({
-      list,
-      total,
-      page: parseInt(page),
-      size: parseInt(size),
-      pages: Math.ceil(total / size)
-    })
-  }
-}
-
-module.exports = BaseController
 ```
 
 ---
