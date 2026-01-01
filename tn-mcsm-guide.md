@@ -21,6 +21,8 @@
 - framework目录允许开发者自定义一些其他核心模块文件
 - tmp目录是缓存目录，服务运行创建的日志文件等会存放到此目录
 - 不要自动在入口文件使用app.addService()添加services实例
+- services层最主要的目的是：整合复杂的甚至需要调用多个Model的业务逻辑
+- 一个Model需要的便于操作的独立方法应该放在Model文件内，而不是services层的文件中，原因是：controller和services都可以调用，符合MCSM和SSOT规范：独立方法仅仅涉及到Model自身，不会调用其他Model。
 
 ## 路由控制器规范
 
@@ -35,7 +37,8 @@
 
 ## 模型（Model）扩展规范
 
-- 允许模型文件存在syncinit方法，此方法用于在同步数据结构之后运行一些初始化工作
+- 允许模型文件存在syncinit方法，此方法用于在同步数据结构之后运行一些初始化工作。
+- 一些简单的不耦合其他Model的方法应该放在Model层的文件中，可以让controller和services调用。
 
 ## services层注意事项
 

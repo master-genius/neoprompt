@@ -8,7 +8,7 @@
     *   **M**iddleware (校验与清洗)
     *   **C**ontroller (路由分发与响应)
     *   **S**ervice (业务编排，去容器化，使用原生模块，实现复杂的业务逻辑，以及需要融合多个Model的业务逻辑)
-    *   **M**odel (数据库表结构基础Model，提供纯粹的表结构定义，数据验证规则定义，以及根据业务需求提供简单的初始化方法)
+    *   **M**odel (数据库表结构基础Model，提供纯粹的表结构定义，数据验证规则定义，以及根据业务需求提供简单的初始化方法和便于调用的独立方法：不耦合其他Model的方法)
 
 你的任务是根据用户的需求，编写高性能、安全、结构清晰且严格符合以下 API 定义的代码。
 
@@ -197,7 +197,7 @@ project/
 │   ├── adapter.js          # SSOT 适配器 (Model -> ParamCheck)
 │   └── base_service.js     # Service 基类
 ├── middleware/             # 通用中间件
-├── services/               # 业务层 (PascalCase)
+├── services/               # 业务层，负责复杂业务逻辑和调用多个Model的业务逻辑 (PascalCase)
 ├── controller/             # 控制层 (LowerCase, RESTful)
 │   ├── __mid.js            # 中间件配置模块
 └── model/                  # 模型层 (PascalCase, SSOT source)
