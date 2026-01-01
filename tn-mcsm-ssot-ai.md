@@ -624,5 +624,6 @@ module.exports = [
 
 - services层主要目的是封装复杂业务逻辑，比如调用多个Model，或在事物中调用多个Model
 - services层禁止过度封装简单方法，比如方法内只有一行代码
+- 时间戳是通过model定义的column中，对应列属性的timestamp指定：insert或update，NeoPG ORM扩展会自动根据声明处理
 
 ---
