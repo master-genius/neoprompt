@@ -242,13 +242,27 @@ class BaseService {
     }
 
     /**
+     * 应优先使用此方法作为api调用返回列表
+     * @param {number} limit - default 12
+     * @param {number} offset - default 0 
+     * @param {object} options - support: where fields 
+     * @returns  
+     * */
+    async list(limit=12, offset=0, options={}) {
+        let where = options.where || {}
+        let fields = options.fields || null
+
+        return this.model.limit(limit, offset).where(where).select(fields).findAndCount()
+    }
+
+    /**
      * 
      * @param {number} page - default 1
      * @param {number} size - default 20 
      * @param {object} options - support: where fields 
      * @returns 
      */
-    async list(page=1, size=20, options={}) {
+    async page(page=1, size=20, options={}) {
         let where = options.where || {}
         let fields = options.fields || null
 
@@ -605,3 +619,8 @@ module.exports = [
         *   示例: `const User = require('../model/User.js')`。
 
 ---
+
+## PART 6：规范细则与注意
+
+- services层主要目的是封装复杂业务逻辑，比如调用多个Model，或在事物中调用多个Model
+- services层禁止过度封装简单方法，比如方法内只有一行代码
