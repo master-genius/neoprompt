@@ -418,12 +418,21 @@ class User extends ModelChain {
             id: { type: dataTypes.ID },
             username: {
                 type: dataTypes.STRING(50),
-                // 核心：直接在此定义校验规则
+                // 核心：直接在此定义校验规则，用于api提交的ParamCheck扩展的规则校验
                 rule: { must: true, max: 20, errorMessage: '用户名非法' }
             },
             age: {
                 type: dataTypes.INT,
+                //to表示把参数的字符串转换为数字，支持：int或float
                 rule: { to: 'int', min: 1, max: 150 }
+            },
+            role: {
+                type: dataTypes.STRING(12),
+                default: 'user',
+                //数据库自身的校验函数，在插入或更新数据时会自动检测
+                validate: v => {
+                    return ['user', 'test', 'inner'].includes(v)
+                }
             }
         },
         denyNotRule: true, // 拒绝 Schema 中未定义的字段
@@ -625,5 +634,37 @@ module.exports = [
 - services层主要目的是封装复杂业务逻辑，比如调用多个Model，或在事物中调用多个Model
 - services层禁止过度封装简单方法，比如方法内只有一行代码
 - 自动化时间戳是通过model定义的column中，对应列属性的timestamp指定：insert或update，NeoPG ORM扩展会自动根据声明处理
+- Model模块定义表结构的column的列属性定义的rule是给API中间件ParamCheck使用，和数据库自身的数据校验无关，数据库自身的校验应该定义validate函数属性
+- rule规则的核心思想是SSOT，一个Model在保持高内聚低耦合的情况下，描述对数据的规则校验，controller部分会自动抽离rule生成中间件，让API能够自动校验数据，此环节和validate无关
+- Model中column中定义的rule支持以下属性：
+    * **to**：支持int、float、boolean|bool，表示转换为对应类型的数据，querystring和pathname部分传参解析后都是字符串，特定情况需要转换
+    * **min**：若转为数字表示最低允许数值，字符串则表示最小长度
+    * **max**：若转为数字表示最高允许数值，字符串则表示最大长度
+    * **must**：API调用传参必须要传递此参数
+    * **default**：默认值
+    * **callback**：回调函数，若传递函数则会执行，若结果返回false则表示校验失败（必须是返回false），代码示例：
+        ```javascript
+        {
+            name: {
+                /**
+                 * @param {object} obj - 要检测的object
+                 * @param {string} k - 检测的属性名
+                 * @param {string} method - 当前请求方法
+                 **/
+                callback: (obj, k, method) => {
+                    if (method === 'POST') {
+                        //POST请求必须添加
+                        if (!obj[k]) return false
+                    }
+                    //其他请求可以不提交
+                    if (obj[k] === undefined) return true
+
+                    //若提交则进行正则检测
+                    return regex.name.test(obj[k])
+                }
+            }
+        }
+        ```
+- rule的定义要符合ParamCheck扩展的要求，不要扩展其他不存在的属性。规则定义要根据实际需求确定，不要过度封装。
 
 ---
