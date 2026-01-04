@@ -414,10 +414,20 @@ v4.0 引入 `w.builtin`，导入语法为 `<-('w:modName')`。
     confirm({
       text: '确定删除吗？',
       dark: true,
+      //使用小按钮样式
+      smallButton: true,
       callback: (args) => { ... },
       args: someData
     });
     ```
+
+#### 自定义按钮的CSS
+
+comfirm支持css变量设置确认和取消按钮的样式：
+- --w-button-bg 设置确认操作button的背景
+- --w-button-bg-cancel 设置取消操作button的背景
+
+---
 
 ### 5.5 其他内置模块
 *   `w:storageEvent`: 监听 `localStorage` 变化 (跨 Tab 通信)。
