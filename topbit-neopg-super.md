@@ -218,11 +218,12 @@ class User {
         const { username, password } = ctx.body
         
         // 使用注入的 db
-        const user = await ctx.service.db.model('User')
-                                        .where('name', '=', username)
-                                        .select('*')
-                                        .get()
-        
+        let db = ctx.service.db
+        const user = await db.model('User')
+                                .where('name', '=', username)
+                                .select('*')
+                                .get()
+
         if (!user) return ctx.status(401).to({ error: 'Auth failed' })
         
         ctx.to({ 
