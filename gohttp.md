@@ -88,6 +88,10 @@ interface RequestOptions {
   agent?: any; // 自定义 agent
   encoding?: string;
   isDownload?: boolean;
+  /** 是否启用 SSE */
+  sse?: boolean;
+  /** SSE 回调函数 */
+  sseCallback?: (chunk: Buffer | null, response: any) => void;
 }
 
 // 上传选项
