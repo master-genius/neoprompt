@@ -68,7 +68,7 @@ class Topbit {
     public use(mid: AsyncFunc, options?: {pre?: boolean, group?: string, method?: string[]}): this;
     public pre(mid: AsyncFunc, options?: object): this; // 在Body解析前执行
     public group(name: string, cb: (route: SubApp) => void): void;
-
+    public printServInfo(): this; //debug模式输出服务信息
     // 扩展入口
     static Loader: class; // 自动化加载器
     static extensions: {
