@@ -98,58 +98,89 @@ class Loader {
 
 ### 1.2 NeoPG Database 核心定义
 ```typescript
-// 核心实例
 class NeoPG {
     constructor(config: {
         host, port, database, user, password, max, debug, schema
     });
     
-    // 属性
-    sql: PostgresFn; // 原生驱动引用，用于模板字符串 sql`...`
+    sql: PostgresFn;
     
-    // 方法
+    // Model 管理
     model(name: string): ModelChain;
+    table(tableName: string, schema?: string): ModelChain;  // 裸表操作，无需预定义Model
     define(modelClass: Class): void;
-    //加载目录下的Model
+    set(modelClass: Class): this;      // 覆盖已注册的同名 Model
+    has(modelName: string): boolean;
     loadModels(dir: string): Promise<void>;
-    sync(opts?: { force: boolean }): Promise<void>;
+    loadFiles(files: string[]): Promise<void>;
+    
+    // Schema 同步
+    sync(opts?: { force?: boolean, model?: string, schema?: string }): Promise<void>;
+    createSchema(name: string): Promise<void>;
+    
+    // 事务
     transaction(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;
-    has(modelname: stirng): boolean;
-    //加载指定的文件列表，内部会调用add方法
-    loadFiles(files: array): Promise<void>;
+    begin(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;  // transaction 别名
+    
+    // Postgres LISTEN/NOTIFY（实时消息）
+    // 返回: Promise<{ close: Function }>
+    listen(channel: string, cb: (payload: any) => void): Promise<CloseHandle>;
+    notify(channel: string, payload: string | Object): Promise<void>;
+    
+    // 连接
+    close(): Promise<void>;
 }
 
-// 链式构造器 (Stateful, Non-reusable)
 class ModelChain {
-    // 必须继承此类，并通过 static schema 定义结构
-    constructor(ctx: NeoPG, model: object, schema:string = 'public');
-    
-    // 查询构建
-    select(cols: string | string[] | sqlFragment: Fragment): this;
+    // === 查询构建（链式，可组合） ===
+    select(cols: string | string[] | Fragment): this;
     where(obj: Object): this;
-    where(field: string, op: string, val: any): this; // e.g. where('age', '>', 18)
-    where(sqlFragment: Fragment): this; // e.g. where(sql`age > ${18}`)
+    where(field: string, op: string, val: any): this;
+    where(fragment: Fragment): this;
+    whereIf(condition: any, arg1: any, arg2?: any, arg3?: any): this;  // condition 为真时才添加条件
     
     limit(limit: number, offset?: number): this;
     page(page: number, size: number): this;
     orderby(field: string, dir?: 'ASC'|'DESC'): this;
+    orderby(obj: { [field: string]: 'ASC'|'DESC' }): this;
+    orderby(fragment: Fragment): this;
+    
+    // JOIN
+    join(table: string | Fragment, on: string | Fragment): this;
+    innerJoin(table: string | Fragment, on: string | Fragment): this;
+    leftJoin(table: string | Fragment, on: string | Fragment): this;
+    rightJoin(table: string | Fragment, on: string | Fragment): this;
+    fullJoin(table: string | Fragment, on: string | Fragment): this;
+    
+    // 分组与锁
+    group(field: string | string[] | Fragment): this;
+    forUpdate(): this;   // SELECT ... FOR UPDATE
+    forShare(): this;    // SELECT ... FOR SHARE
     
     // 写入辅助
-    returning(cols: string | string[]): this; // 关键：获取写入后的数据
+    returning(cols: string | string[]): this;
 
-    // 执行方法 (终结符)
+    // === 执行方法（终结符，执行后链不可复用） ===
     find(): Promise<any[]>;
     get(): Promise<any | null>;
     count(): Promise<number>;
     findAndCount(): Promise<{ data: any[], total: number }>;
     
     insert(data: Object | Object[]): Promise<any>;
-    update(data: Object): Promise<any>;
+    update(data: Object, oneResult?: boolean): Promise<any>;
     delete(): Promise<any>;
     
-    // 事务与工具
-    transaction(cb: (tx: TransactionScope) => Promise<any>): Promise<any>;
-    model(name: string): ModelChain; // 在事务中获取其他模型
+    // 聚合函数
+    min(field: string | Fragment): Promise<number | null>;
+    max(field: string | Fragment): Promise<number | null>;
+    sum(field: string | Fragment): Promise<number | null>;
+    avg(field: string | Fragment): Promise<number | null>;
+    
+    // === 工具 ===
+    clone(): ModelChain;           // 复制当前查询状态，用于基于相同条件执行多次操作
+    transaction(cb): Promise<any>; // 委托给 NeoPG.transaction
+    model(name: string): ModelChain;
+    makeId(len?: number): string;
 }
 ```
 
@@ -178,6 +209,12 @@ class ModelChain {
 
 7.  **文件上传**: 获取文件使用 `ctx.getFile('fieldname')`，保存文件推荐使用扩展 `ToFile` 或 `ctx.moveFile`。
 8.  **Services实例**：services目录下的模块导出是new操作之后的实例，采用全局单例模式，避免重复实例化。
+9. **NeoPG 聚合与JOIN**: 需要关联查询时使用 `.leftJoin()` 等方法，
+   需要统计时使用 `.sum()/.avg()/.min()/.max()` 方法，
+   需要分组时使用 `.group()` 方法。
+   禁止在应用层用 JS 循环实现数据库能完成的聚合计算。
+10. **条件查询**: 动态条件使用 `.whereIf(condition, ...)` 
+    代替 `if (condition) query.where(...)` 模式。
 
 ---
 
