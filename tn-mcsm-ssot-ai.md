@@ -332,13 +332,19 @@ const {ParamCheck} = require('topbit').extensions
 
 exports.modelRule = (Model, options = {}) => {
     if (!Model || !Model.schema) return { rule: {} }
+    
     const columns = Model.schema.column
-    const modelOptions = Model.schema.ruleOptions || {}
+    
+    // 关键修复：断开引用，避免污染 Model 静态属性
+    const srcOptions = Model.schema.ruleOptions || {}
+    const modelOptions = { ...srcOptions }
+    if (srcOptions.deny) modelOptions.deny = [...srcOptions.deny]
+    
     let denyNotRule = true
     if (options.denyNotRule !== undefined) {
-      denyNotRule = !!options.denyNotRule
+        denyNotRule = !!options.denyNotRule
     } else if (Model.schema.denyNotRule !== undefined) {
-      denyNotRule = !!Model.schema.denyNotRule
+        denyNotRule = !!Model.schema.denyNotRule
     }
 
     const denylist = []
@@ -347,27 +353,33 @@ exports.modelRule = (Model, options = {}) => {
 
     for (const [field, meta] of Object.entries(columns)) {
         if (!meta.rule) {
-          denyNotRule && denylist.push(field)
-          continue
+            denyNotRule && denylist.push(field)
+            continue
         }
         if (options.pick && !options.pick.includes(field)) continue
         if (options.omit && options.omit.includes(field)) continue
 
         const rule = { ...meta.rule }
-        rule.must = mustFields.includes(field)
+        
+        // 修复：只有显式传了 must 数组时才覆盖
+        if (mustFields.length > 0) {
+            rule.must = mustFields.includes(field)
+        }
+        
         ruleMap[field] = rule
     }
 
-    if ((!modelOptions.deny || !Array.isArray(modelOptions.deny)) && denylist.length > 0) {
-      modelOptions.deny = denylist
-    } else if (Array.isArray(modelOptions.deny)) {
-      denylist.forEach(x => {
-        !modelOptions.deny.includes(x) && modelOptions.deny.push(x)
-      })
+    if (!modelOptions.deny && denylist.length > 0) {
+        modelOptions.deny = denylist
+    } else if (Array.isArray(modelOptions.deny) && denylist.length > 0) {
+        // 合并去重，写入新数组（不污染原始数组，因为上面已经拷贝了）
+        denylist.forEach(x => {
+            !modelOptions.deny.includes(x) && modelOptions.deny.push(x)
+        })
     }
 
     if (options.deleteDeny !== undefined) {
-      modelOptions.deleteDeny = !!options.deleteDeny
+        modelOptions.deleteDeny = !!options.deleteDeny
     }
 
     return { rule: ruleMap, ...modelOptions }
